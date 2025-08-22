@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { useState, useEffect } from "preact/hooks";
-import { Settings, X } from "lucide-react";
+import { Settings, ArrowLeft, Github } from "lucide-react";
 import {
   HNSearchService,
   HNComment,
@@ -31,7 +31,7 @@ function App() {
     urlMatch: "partial",
     sort: "date",
   });
-  const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState<"main" | "settings">("main");
 
   const hnService = new HNSearchService();
 
@@ -212,7 +212,100 @@ function App() {
 
   const totalItems = stories.length + getTotalComments();
 
-  return (
+  const SettingsPage = () => (
+    <div class="w-96 h-96 bg-white flex flex-col font-sf">
+      {/* Settings Header */}
+      <div class="flex items-center justify-between p-4 border-b border-apple-light-gray bg-gradient-to-r from-white to-apple-light-gray">
+        <div class="flex items-center space-x-2">
+          <button
+            onClick={() => setCurrentPage("main")}
+            class="text-gray-600 hover:bg-gray-200 p-2 rounded transition-colors mr-1"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <img src="./icon-48.png" alt="Context" class="w-6 h-6" />
+          <h1 class="text-lg font-semibold text-apple-dark-gray">Settings</h1>
+        </div>
+      </div>
+
+      {/* Settings Content */}
+      <div class="flex-1 overflow-y-auto p-4">
+        <div class="space-y-6">
+          {/* Filters Section */}
+          <div>
+            <h2 class="text-sm font-semibold text-apple-dark-gray mb-3">
+              Search Filters
+            </h2>
+            <div class="space-y-3">
+              {/* Type Filter */}
+              <div>
+                <label class="block text-xs font-medium text-apple-dark-gray mb-1">
+                  Content Type
+                </label>
+                <select
+                  value={filters.type}
+                  onChange={(e) =>
+                    handleFilterChange({
+                      ...filters,
+                      type: (e.target as HTMLSelectElement).value as FilterType,
+                    })
+                  }
+                  class="w-full text-sm border border-gray-200 rounded px-3 py-2 bg-white"
+                >
+                  <option value="all">All (Stories + Comments)</option>
+                  <option value="story">Stories Only</option>
+                  <option value="comment">Comments Only</option>
+                </select>
+              </div>
+
+              {/* URL Match Filter */}
+              <div>
+                <label class="block text-xs font-medium text-apple-dark-gray mb-1">
+                  URL Matching
+                </label>
+                <select
+                  value={filters.urlMatch}
+                  onChange={(e) =>
+                    handleFilterChange({
+                      ...filters,
+                      urlMatch: (e.target as HTMLSelectElement)
+                        .value as URLMatchType,
+                    })
+                  }
+                  class="w-full text-sm border border-gray-200 rounded px-3 py-2 bg-white"
+                >
+                  <option value="partial">Domain Match</option>
+                  <option value="full">Exact URL Match</option>
+                </select>
+              </div>
+
+              {/* Sort Filter */}
+              <div>
+                <label class="block text-xs font-medium text-apple-dark-gray mb-1">
+                  Sort By
+                </label>
+                <select
+                  value={filters.sort}
+                  onChange={(e) =>
+                    handleFilterChange({
+                      ...filters,
+                      sort: (e.target as HTMLSelectElement).value as SortType,
+                    })
+                  }
+                  class="w-full text-sm border border-gray-200 rounded px-3 py-2 bg-white"
+                >
+                  <option value="date">Most Recent</option>
+                  <option value="points">Most Popular</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const MainPage = () => (
     <div class="w-96 h-96 bg-white flex flex-col font-sf">
       {/* Header */}
       <div class="flex items-center justify-between p-4 border-b border-apple-light-gray bg-gradient-to-r from-white to-apple-light-gray">
@@ -221,86 +314,72 @@ function App() {
           <h1 class="text-lg font-semibold text-apple-dark-gray">Context</h1>
         </div>
         <div class="flex items-center space-x-2">
-          <div class="text-xs text-apple-gray">
-            {stories.length} stories • {getTotalComments()} comments
-          </div>
           <button
-            onClick={() => setShowFilters(!showFilters)}
-            class="text-apple-blue hover:bg-apple-light-gray p-1 rounded transition-colors"
+            onClick={() =>
+              chrome.tabs.create({
+                url: "https://github.com/rivertwilight/context",
+              })
+            }
+            class="text-gray-600 hover:bg-gray-200 p-2 rounded transition-colors"
           >
-            {showFilters ? <X size={14} /> : <Settings size={14} />}
+            <Github size={18} />
+          </button>
+          <button
+            onClick={() => setCurrentPage("settings")}
+            class="text-gray-600 hover:bg-gray-200 p-2 rounded transition-colors"
+          >
+            <Settings size={18} />
           </button>
         </div>
       </div>
 
-      {/* Filters */}
-      {showFilters && (
-        <div class="p-3 border-b border-apple-light-gray bg-gray-50">
-          <div class="space-y-2">
-            {/* Type Filter */}
-            <div class="flex items-center space-x-2">
-              <span class="text-xs font-medium text-apple-dark-gray w-12">
-                Type:
-              </span>
-              <select
-                value={filters.type}
-                onChange={(e) =>
-                  handleFilterChange({
-                    ...filters,
-                    type: (e.target as HTMLSelectElement).value as FilterType,
-                  })
-                }
-                class="text-xs border border-gray-200 rounded px-2 py-1 bg-white flex-1"
-              >
-                <option value="all">All</option>
-                <option value="story">Stories</option>
-                <option value="comment">Comments</option>
-              </select>
-            </div>
+      {/* Filters Bar */}
+      <div class="p-2 border-b border-apple-light-gray bg-gray-50">
+        <div class="flex items-center space-x-2">
+          <select
+            value={filters.type}
+            onChange={(e) =>
+              handleFilterChange({
+                ...filters,
+                type: (e.target as HTMLSelectElement).value as FilterType,
+              })
+            }
+            class="text-xs border border-gray-200 rounded px-2 py-1 bg-white flex-1"
+          >
+            <option value="all">All</option>
+            <option value="story">Stories</option>
+            <option value="comment">Comments</option>
+          </select>
 
-            {/* URL Match Filter */}
-            <div class="flex items-center space-x-2">
-              <span class="text-xs font-medium text-apple-dark-gray w-12">
-                Match:
-              </span>
-              <select
-                value={filters.urlMatch}
-                onChange={(e) =>
-                  handleFilterChange({
-                    ...filters,
-                    urlMatch: (e.target as HTMLSelectElement)
-                      .value as URLMatchType,
-                  })
-                }
-                class="text-xs border border-gray-200 rounded px-2 py-1 bg-white flex-1"
-              >
-                <option value="partial">Domain</option>
-                <option value="full">Exact URL</option>
-              </select>
-            </div>
+          <select
+            value={filters.urlMatch}
+            onChange={(e) =>
+              handleFilterChange({
+                ...filters,
+                urlMatch: (e.target as HTMLSelectElement).value as URLMatchType,
+              })
+            }
+            class="text-xs border border-gray-200 rounded px-2 py-1 bg-white flex-1"
+          >
+            <option value="partial">Domain</option>
+            <option value="full">Exact URL</option>
+          </select>
 
-            {/* Sort Filter */}
-            <div class="flex items-center space-x-2">
-              <span class="text-xs font-medium text-apple-dark-gray w-12">
-                Sort:
-              </span>
-              <select
-                value={filters.sort}
-                onChange={(e) =>
-                  handleFilterChange({
-                    ...filters,
-                    sort: (e.target as HTMLSelectElement).value as SortType,
-                  })
-                }
-                class="text-xs border border-gray-200 rounded px-2 py-1 bg-white flex-1"
-              >
-                <option value="date">Recent</option>
-                <option value="points">Popular</option>
-              </select>
-            </div>
-          </div>
+          <select
+            value={filters.sort}
+            onChange={(e) =>
+              handleFilterChange({
+                ...filters,
+                sort: (e.target as HTMLSelectElement).value as SortType,
+              })
+            }
+            class="text-xs border border-gray-200 rounded px-2 py-1 bg-white flex-1"
+          >
+            <option value="date">Recent</option>
+            <option value="points">Popular</option>
+          </select>
         </div>
-      )}
+      </div>
 
       {/* Content */}
       <div class="flex-1 overflow-hidden">
@@ -524,6 +603,12 @@ function App() {
       </div>
     </div>
   );
+
+  if (currentPage === "settings") {
+    return <SettingsPage />;
+  }
+
+  return <MainPage />;
 }
 
 render(<App />, document.getElementById("app")!);
