@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Context",
   "version": "1.0.0",
-  "description": "Shows related Hacker News comments for the current tab",
+  "description": "Find related comments & stories from HN for the current tab",
   "permissions": [
     "activeTab",
     "storage"

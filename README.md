@@ -10,7 +10,7 @@
 
 </div>
 
-Check HN stories & comments related to current viewing page.
+Find related comments & stories from HN for current tab
 
 https://github.com/RiverTwilight/Timeline/assets/52880665/57179574-3c24-48ea-b21d-44cdf3ce444a
 
