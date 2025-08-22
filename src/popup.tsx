@@ -1,176 +1,215 @@
-import { render } from 'preact'
-import { useState, useEffect } from 'preact/hooks'
-import { HNSearchService, HNComment, HNStory, SearchFilters, FilterType, URLMatchType, SortType } from './services/hnApi'
+import { render } from "preact";
+import { useState, useEffect } from "preact/hooks";
+import {
+  HNSearchService,
+  HNComment,
+  HNStory,
+  SearchFilters,
+  FilterType,
+  URLMatchType,
+  SortType,
+} from "./services/hnApi";
 
 function App() {
-  const [stories, setStories] = useState<HNStory[]>([])
-  const [comments, setComments] = useState<HNComment[]>([])
-  const [storyComments, setStoryComments] = useState<Map<number, HNComment[]>>(new Map())
-  const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [currentUrl, setCurrentUrl] = useState('')
-  const [error, setError] = useState('')
-  const [generalCommentsPage, setGeneralCommentsPage] = useState(0)
-  const [storyCommentsPages, setStoryCommentsPages] = useState<Map<number, number>>(new Map())
-  const [hasMoreContent, setHasMoreContent] = useState(false)
+  const [stories, setStories] = useState<HNStory[]>([]);
+  const [comments, setComments] = useState<HNComment[]>([]);
+  const [storyComments, setStoryComments] = useState<Map<number, HNComment[]>>(
+    new Map()
+  );
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState("");
+  const [error, setError] = useState("");
+  const [generalCommentsPage, setGeneralCommentsPage] = useState(0);
+  const [storyCommentsPages, setStoryCommentsPages] = useState<
+    Map<number, number>
+  >(new Map());
+  const [hasMoreContent, setHasMoreContent] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
-    type: 'all',
-    urlMatch: 'partial',
-    sort: 'date'
-  })
-  const [showFilters, setShowFilters] = useState(false)
+    type: "all",
+    urlMatch: "partial",
+    sort: "date",
+  });
+  const [showFilters, setShowFilters] = useState(false);
 
-  const hnService = new HNSearchService()
+  const hnService = new HNSearchService();
 
   useEffect(() => {
-    getCurrentTabUrl()
-  }, [])
+    getCurrentTabUrl();
+  }, []);
 
   const getCurrentTabUrl = async () => {
     try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
       if (tab?.url) {
-        setCurrentUrl(tab.url)
-        await searchComments(tab.url)
+        setCurrentUrl(tab.url);
+        await searchComments(tab.url);
       }
     } catch (err) {
-      setError('Unable to get current tab URL')
-      setLoading(false)
+      setError("Unable to get current tab URL");
+      setLoading(false);
     }
-  }
+  };
 
   const searchComments = async (url: string, searchFilters = filters) => {
-    setLoading(true)
-    setError('')
-    
+    setLoading(true);
+    setError("");
+
     try {
-      const { stories: foundStories, comments: foundComments, storyComments: foundStoryComments } = await hnService.searchAll(url, searchFilters)
-      
-      
-      setStories(foundStories)
-      setComments(foundComments)
-      setStoryComments(foundStoryComments)
-      
+      const {
+        stories: foundStories,
+        comments: foundComments,
+        storyComments: foundStoryComments,
+      } = await hnService.searchAll(url, searchFilters);
+
+      setStories(foundStories);
+      setComments(foundComments);
+      setStoryComments(foundStoryComments);
+
       // Initialize pagination states
-      setGeneralCommentsPage(foundComments.length > 0 ? 1 : 0)
-      const newStoryPages = new Map<number, number>()
+      setGeneralCommentsPage(foundComments.length > 0 ? 1 : 0);
+      const newStoryPages = new Map<number, number>();
       foundStoryComments.forEach((comments, storyId) => {
         if (comments.length > 0) {
-          newStoryPages.set(storyId, 1)
+          newStoryPages.set(storyId, 1);
         }
-      })
-      setStoryCommentsPages(newStoryPages)
-      
+      });
+      setStoryCommentsPages(newStoryPages);
+
       // Check if there might be more content
       setHasMoreContent(
-        foundComments.length >= 10 || 
-        foundStories.some(story => foundStoryComments.get(story.objectID || story.id)?.length >= 20) ||
-        (foundStories.length > 0 && searchFilters.type === 'story') // Always show load more for stories
-      )
+        foundComments.length >= 10 ||
+          foundStories.some(
+            (story) =>
+              foundStoryComments.get(story.objectID || story.id)?.length >= 20
+          ) ||
+          (foundStories.length > 0 && searchFilters.type === "story") // Always show load more for stories
+      );
     } catch (err) {
-      setError('Failed to fetch HN content')
+      setError("Failed to fetch HN content");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleFilterChange = (newFilters: SearchFilters) => {
-    setFilters(newFilters)
+    setFilters(newFilters);
     if (currentUrl) {
-      searchComments(currentUrl, newFilters)
+      searchComments(currentUrl, newFilters);
     }
-  }
+  };
 
   const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
-    
-    if (diffInHours < 1) return 'just now'
-    if (diffInHours < 24) return `${diffInHours}h ago`
-    const diffInDays = Math.floor(diffInHours / 24)
-    if (diffInDays < 30) return `${diffInDays}d ago`
-    const diffInMonths = Math.floor(diffInDays / 30)
-    return `${diffInMonths}mo ago`
-  }
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    );
+
+    if (diffInHours < 1) return "just now";
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 30) return `${diffInDays}d ago`;
+    const diffInMonths = Math.floor(diffInDays / 30);
+    return `${diffInMonths}mo ago`;
+  };
 
   const decodeHtmlEntities = (text: string) => {
-    const textarea = document.createElement('textarea')
-    textarea.innerHTML = text
-    return textarea.value
-  }
+    const textarea = document.createElement("textarea");
+    textarea.innerHTML = text;
+    return textarea.value;
+  };
 
   const truncateText = (text: string, maxLength: number) => {
-    if (text.length <= maxLength) return text
-    return text.slice(0, maxLength) + '...'
-  }
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength) + "...";
+  };
 
   const openInHN = (comment: HNComment) => {
-    chrome.tabs.create({ url: `https://news.ycombinator.com/item?id=${comment.story_id}` })
-  }
+    chrome.tabs.create({
+      url: `https://news.ycombinator.com/item?id=${comment.story_id}`,
+    });
+  };
 
   const openStory = (story: HNStory) => {
     const storyId = story.objectID || story.id;
-    chrome.tabs.create({ url: story.url || `https://news.ycombinator.com/item?id=${storyId}` })
-  }
+    chrome.tabs.create({
+      url: story.url || `https://news.ycombinator.com/item?id=${storyId}`,
+    });
+  };
 
   const loadMoreContent = async () => {
-    if (loadingMore || !currentUrl) return
-    
-    setLoadingMore(true)
+    if (loadingMore || !currentUrl) return;
+
+    setLoadingMore(true);
     try {
       // Load more general comments if we have them and no story comments
       if (comments.length > 0 && storyComments.size === 0) {
-        const moreComments = await hnService.loadMoreGeneralComments(currentUrl, filters, generalCommentsPage)
+        const moreComments = await hnService.loadMoreGeneralComments(
+          currentUrl,
+          filters,
+          generalCommentsPage
+        );
         if (moreComments.length > 0) {
-          setComments(prev => [...prev, ...moreComments])
-          setGeneralCommentsPage(prev => prev + 1)
+          setComments((prev) => [...prev, ...moreComments]);
+          setGeneralCommentsPage((prev) => prev + 1);
         } else {
-          setHasMoreContent(false)
+          setHasMoreContent(false);
         }
       }
       // Load more story comments (always try if we have stories, regardless of filter)
       else if (storyComments.size > 0 || stories.length > 0) {
-        let foundMoreContent = false
-        const newStoryComments = new Map(storyComments)
-        const newStoryPages = new Map(storyCommentsPages)
-        
+        let foundMoreContent = false;
+        const newStoryComments = new Map(storyComments);
+        const newStoryPages = new Map(storyCommentsPages);
+
         for (const story of stories) {
           const storyId = story.objectID || story.id;
-          const currentComments = newStoryComments.get(storyId) || []
-          const currentPage = newStoryPages.get(storyId) || 1
-          
-          if (currentComments.length >= 20) { // Only load more if we have a full page
-            const moreComments = await hnService.loadMoreStoryComments(storyId, filters, currentPage)
+          const currentComments = newStoryComments.get(storyId) || [];
+          const currentPage = newStoryPages.get(storyId) || 1;
+
+          if (currentComments.length >= 20) {
+            // Only load more if we have a full page
+            const moreComments = await hnService.loadMoreStoryComments(
+              storyId,
+              filters,
+              currentPage
+            );
             if (moreComments.length > 0) {
-              newStoryComments.set(storyId, [...currentComments, ...moreComments])
-              newStoryPages.set(storyId, currentPage + 1)
-              foundMoreContent = true
+              newStoryComments.set(storyId, [
+                ...currentComments,
+                ...moreComments,
+              ]);
+              newStoryPages.set(storyId, currentPage + 1);
+              foundMoreContent = true;
             }
           }
         }
-        
-        setStoryComments(newStoryComments)
-        setStoryCommentsPages(newStoryPages)
-        
+
+        setStoryComments(newStoryComments);
+        setStoryCommentsPages(newStoryPages);
+
         if (!foundMoreContent) {
-          setHasMoreContent(false)
+          setHasMoreContent(false);
         }
       }
     } catch (err) {
-      console.error('Failed to load more content:', err)
+      console.error("Failed to load more content:", err);
     } finally {
-      setLoadingMore(false)
+      setLoadingMore(false);
     }
-  }
+  };
 
   const getTotalComments = () => {
-    let total = comments.length
-    storyComments.forEach(comments => total += comments.length)
-    return total
-  }
+    let total = comments.length;
+    storyComments.forEach((comments) => (total += comments.length));
+    return total;
+  };
 
-  const totalItems = stories.length + getTotalComments()
+  const totalItems = stories.length + getTotalComments();
 
   return (
     <div class="w-96 h-96 bg-white flex flex-col font-sf">
@@ -190,7 +229,7 @@ function App() {
             onClick={() => setShowFilters(!showFilters)}
             class="text-xs text-apple-blue hover:bg-apple-light-gray px-2 py-1 rounded transition-colors"
           >
-            {showFilters ? '✕' : '⚙️'}
+            {showFilters ? "✕" : "⚙️"}
           </button>
         </div>
       </div>
@@ -201,10 +240,17 @@ function App() {
           <div class="space-y-2">
             {/* Type Filter */}
             <div class="flex items-center space-x-2">
-              <span class="text-xs font-medium text-apple-dark-gray w-12">Type:</span>
+              <span class="text-xs font-medium text-apple-dark-gray w-12">
+                Type:
+              </span>
               <select
                 value={filters.type}
-                onChange={(e) => handleFilterChange({...filters, type: (e.target as HTMLSelectElement).value as FilterType})}
+                onChange={(e) =>
+                  handleFilterChange({
+                    ...filters,
+                    type: (e.target as HTMLSelectElement).value as FilterType,
+                  })
+                }
                 class="text-xs border border-gray-200 rounded px-2 py-1 bg-white flex-1"
               >
                 <option value="all">All</option>
@@ -215,10 +261,18 @@ function App() {
 
             {/* URL Match Filter */}
             <div class="flex items-center space-x-2">
-              <span class="text-xs font-medium text-apple-dark-gray w-12">Match:</span>
+              <span class="text-xs font-medium text-apple-dark-gray w-12">
+                Match:
+              </span>
               <select
                 value={filters.urlMatch}
-                onChange={(e) => handleFilterChange({...filters, urlMatch: (e.target as HTMLSelectElement).value as URLMatchType})}
+                onChange={(e) =>
+                  handleFilterChange({
+                    ...filters,
+                    urlMatch: (e.target as HTMLSelectElement)
+                      .value as URLMatchType,
+                  })
+                }
                 class="text-xs border border-gray-200 rounded px-2 py-1 bg-white flex-1"
               >
                 <option value="partial">Domain</option>
@@ -228,10 +282,17 @@ function App() {
 
             {/* Sort Filter */}
             <div class="flex items-center space-x-2">
-              <span class="text-xs font-medium text-apple-dark-gray w-12">Sort:</span>
+              <span class="text-xs font-medium text-apple-dark-gray w-12">
+                Sort:
+              </span>
               <select
                 value={filters.sort}
-                onChange={(e) => handleFilterChange({...filters, sort: (e.target as HTMLSelectElement).value as SortType})}
+                onChange={(e) =>
+                  handleFilterChange({
+                    ...filters,
+                    sort: (e.target as HTMLSelectElement).value as SortType,
+                  })
+                }
                 class="text-xs border border-gray-200 rounded px-2 py-1 bg-white flex-1"
               >
                 <option value="date">Recent</option>
@@ -262,7 +323,9 @@ function App() {
           <div class="flex items-center justify-center h-full p-4">
             <div class="text-center">
               <div class="text-4xl mb-2">🤷‍♂️</div>
-              <p class="text-sm text-apple-gray">No HN content found for this page</p>
+              <p class="text-sm text-apple-gray">
+                No HN content found for this page
+              </p>
             </div>
           </div>
         ) : (
@@ -270,11 +333,18 @@ function App() {
             {/* Stories with their comments */}
             {stories.map((story) => {
               const storyId = story.objectID || story.id;
-              const storyCommentsForThisStory = storyComments.get(storyId) || []
+              const storyCommentsForThisStory =
+                storyComments.get(storyId) || [];
               return (
-                <div key={`story-${storyId}`} class="border-b border-apple-light-gray">
+                <div
+                  key={`story-${storyId}`}
+                  class="border-b border-apple-light-gray"
+                >
                   {/* Story Header */}
-                  <div class="p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => openStory(story)}>
+                  <div
+                    class="p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => openStory(story)}
+                  >
                     <div class="flex items-start justify-between mb-1">
                       <div class="flex items-center space-x-2">
                         <div class="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0 mt-1.5"></div>
@@ -290,11 +360,11 @@ function App() {
                         <span>{formatTimeAgo(story.created_at)}</span>
                       </div>
                     </div>
-                    
+
                     <h3 class="text-sm font-medium text-apple-dark-gray leading-relaxed mb-1">
                       {story.title}
                     </h3>
-                    
+
                     {story.url && (
                       <div class="text-xs text-apple-gray">
                         {new URL(story.url).hostname}
@@ -303,43 +373,57 @@ function App() {
                   </div>
 
                   {/* Comments for this story */}
-                  {storyCommentsForThisStory.slice(0, 5).map((comment, index) => (
-                    <div
-                      key={`story-${storyId}-comment-${comment.id}`}
-                      class={`p-3 pl-6 cursor-pointer transition-colors hover:bg-apple-light-gray ${
-                        index === storyCommentsForThisStory.slice(0, 5).length - 1 ? '' : 'border-b border-gray-200'
-                      }`}
-                      onClick={() => openInHN(comment)}
-                    >
-                      <div class="flex items-start justify-between mb-1">
-                        <div class="flex items-center space-x-2">
-                          <div class="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0 mt-1.5"></div>
-                          <span class="text-xs font-medium text-apple-blue">
-                            {comment.author}
-                          </span>
+                  {storyCommentsForThisStory
+                    .slice(0, 5)
+                    .map((comment, index) => (
+                      <div
+                        key={`story-${storyId}-comment-${comment.id}`}
+                        class={`p-3 pl-6 cursor-pointer transition-colors hover:bg-apple-light-gray ${
+                          index ===
+                          storyCommentsForThisStory.slice(0, 5).length - 1
+                            ? ""
+                            : "border-b border-gray-200"
+                        }`}
+                        onClick={() => openInHN(comment)}
+                      >
+                        <div class="flex items-start justify-between mb-1">
+                          <div class="flex items-center space-x-2">
+                            <div class="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0 mt-1.5"></div>
+                            <span class="text-xs font-medium text-apple-blue">
+                              {comment.author}
+                            </span>
+                          </div>
+                          <div class="flex items-center space-x-2 text-xs text-apple-gray">
+                            <span>{comment.points} pts</span>
+                            <span>•</span>
+                            <span>{formatTimeAgo(comment.created_at)}</span>
+                          </div>
                         </div>
-                        <div class="flex items-center space-x-2 text-xs text-apple-gray">
-                          <span>{comment.points} pts</span>
-                          <span>•</span>
-                          <span>{formatTimeAgo(comment.created_at)}</span>
-                        </div>
+
+                        <p class="text-sm text-apple-dark-gray leading-relaxed">
+                          {truncateText(
+                            decodeHtmlEntities(
+                              comment.comment_text.replace(/<[^>]*>/g, "")
+                            ),
+                            120
+                          )}
+                        </p>
                       </div>
-                      
-                      <p class="text-sm text-apple-dark-gray leading-relaxed">
-                        {truncateText(decodeHtmlEntities(comment.comment_text.replace(/<[^>]*>/g, '')), 120)}
-                      </p>
-                    </div>
-                  ))}
-                  
+                    ))}
+
                   {storyCommentsForThisStory.length > 5 && (
-                    <div class="p-2 pl-6 text-xs text-apple-gray cursor-pointer hover:bg-apple-light-gray" onClick={() => openStory(story)}>
-                      +{storyCommentsForThisStory.length - 5} more comments... (click to view on HN)
+                    <div
+                      class="p-2 pl-6 text-xs text-apple-gray cursor-pointer hover:bg-apple-light-gray"
+                      onClick={() => openStory(story)}
+                    >
+                      +{storyCommentsForThisStory.length - 5} more comments...
+                      (click to view on HN)
                     </div>
                   )}
                 </div>
-              )
+              );
             })}
-            
+
             {/* General Comments (only shown if no story comments) */}
             {comments.map((comment) => (
               <div
@@ -358,11 +442,16 @@ function App() {
                     {formatTimeAgo(comment.created_at)}
                   </span>
                 </div>
-                
+
                 <p class="text-sm text-apple-dark-gray leading-relaxed mb-2">
-                  {truncateText(decodeHtmlEntities(comment.comment_text.replace(/<[^>]*>/g, '')), 150)}
+                  {truncateText(
+                    decodeHtmlEntities(
+                      comment.comment_text.replace(/<[^>]*>/g, "")
+                    ),
+                    150
+                  )}
                 </p>
-                
+
                 {comment.story_title && (
                   <div class="text-xs text-apple-gray">
                     on "{truncateText(comment.story_title, 50)}"
@@ -385,7 +474,7 @@ function App() {
                       <span>Loading...</span>
                     </div>
                   ) : (
-                    'Load More'
+                    "Load More"
                   )}
                 </button>
               </div>
@@ -394,7 +483,7 @@ function App() {
         )}
       </div>
     </div>
-  )
+  );
 }
 
-render(<App />, document.getElementById('app')!)
+render(<App />, document.getElementById("app")!);
