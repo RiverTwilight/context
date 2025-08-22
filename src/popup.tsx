@@ -1,5 +1,6 @@
 import { render } from "preact";
 import { useState, useEffect } from "preact/hooks";
+import { Settings, X } from "lucide-react";
 import {
   HNSearchService,
   HNComment,
@@ -216,9 +217,7 @@ function App() {
       {/* Header */}
       <div class="flex items-center justify-between p-4 border-b border-apple-light-gray bg-gradient-to-r from-white to-apple-light-gray">
         <div class="flex items-center space-x-2">
-          <div class="w-6 h-6 bg-apple-blue rounded-full flex items-center justify-center">
-            <span class="text-white text-xs font-semibold">C</span>
-          </div>
+          <img src="./icon-48.png" alt="Context" class="w-6 h-6" />
           <h1 class="text-lg font-semibold text-apple-dark-gray">Context</h1>
         </div>
         <div class="flex items-center space-x-2">
@@ -227,9 +226,9 @@ function App() {
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            class="text-xs text-apple-blue hover:bg-apple-light-gray px-2 py-1 rounded transition-colors"
+            class="text-apple-blue hover:bg-apple-light-gray p-1 rounded transition-colors"
           >
-            {showFilters ? "✕" : "⚙️"}
+            {showFilters ? <X size={14} /> : <Settings size={14} />}
           </button>
         </div>
       </div>
@@ -306,11 +305,52 @@ function App() {
       {/* Content */}
       <div class="flex-1 overflow-hidden">
         {loading ? (
-          <div class="flex items-center justify-center h-full">
-            <div class="flex flex-col items-center space-y-2">
-              <div class="w-6 h-6 border-2 border-apple-blue border-t-transparent rounded-full animate-spin"></div>
-              <span class="text-sm text-apple-gray">Searching HN...</span>
-            </div>
+          <div class="overflow-y-auto h-full">
+            {/* Skeleton Loading */}
+            {[...Array(3)].map((_, i) => (
+              <div key={i} class="border-b border-apple-light-gray">
+                {/* Story Header Skeleton */}
+                <div class="p-3 bg-gray-50">
+                  <div class="flex items-start justify-between mb-2">
+                    <div class="flex items-center space-x-2">
+                      <div class="w-2 h-2 bg-gray-300 rounded-full animate-pulse"></div>
+                      <div class="w-16 h-3 bg-gray-300 rounded animate-pulse"></div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <div class="w-8 h-3 bg-gray-300 rounded animate-pulse"></div>
+                      <div class="w-1 h-1 bg-gray-300 rounded-full animate-pulse"></div>
+                      <div class="w-12 h-3 bg-gray-300 rounded animate-pulse"></div>
+                      <div class="w-1 h-1 bg-gray-300 rounded-full animate-pulse"></div>
+                      <div class="w-10 h-3 bg-gray-300 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div class="w-4/5 h-4 bg-gray-300 rounded animate-pulse mb-2"></div>
+                  <div class="w-24 h-3 bg-gray-300 rounded animate-pulse"></div>
+                </div>
+
+                {/* Comments Skeleton */}
+                {[...Array(2)].map((_, j) => (
+                  <div key={j} class="p-3 pl-6 border-b border-gray-200">
+                    <div class="flex items-start justify-between mb-2">
+                      <div class="flex items-center space-x-2">
+                        <div class="w-1.5 h-1.5 bg-gray-300 rounded-full animate-pulse"></div>
+                        <div class="w-20 h-3 bg-gray-300 rounded animate-pulse"></div>
+                      </div>
+                      <div class="flex items-center space-x-2">
+                        <div class="w-8 h-3 bg-gray-300 rounded animate-pulse"></div>
+                        <div class="w-1 h-1 bg-gray-300 rounded-full animate-pulse"></div>
+                        <div class="w-10 h-3 bg-gray-300 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                    <div class="space-y-1">
+                      <div class="w-full h-3 bg-gray-300 rounded animate-pulse"></div>
+                      <div class="w-5/6 h-3 bg-gray-300 rounded animate-pulse"></div>
+                      <div class="w-3/4 h-3 bg-gray-300 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div class="flex items-center justify-center h-full p-4">

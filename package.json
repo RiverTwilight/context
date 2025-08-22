@@ -8,6 +8,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "lucide-react": "^0.541.0",
     "preact": "^10.19.3"
   },
   "devDependencies": {
