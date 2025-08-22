@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { useState, useEffect } from "preact/hooks";
-import { Settings, ArrowLeft, Github } from "lucide-react";
+import { Settings, ArrowLeft, Github, FileText, Shield } from "lucide-react";
 import {
   HNSearchService,
   HNComment,
@@ -231,72 +231,48 @@ function App() {
       {/* Settings Content */}
       <div class="flex-1 overflow-y-auto p-4">
         <div class="space-y-6">
-          {/* Filters Section */}
-          <div>
-            <h2 class="text-sm font-semibold text-apple-dark-gray mb-3">
-              Search Filters
-            </h2>
-            <div class="space-y-3">
-              {/* Type Filter */}
-              <div>
-                <label class="block text-xs font-medium text-apple-dark-gray mb-1">
-                  Content Type
-                </label>
-                <select
-                  value={filters.type}
-                  onChange={(e) =>
-                    handleFilterChange({
-                      ...filters,
-                      type: (e.target as HTMLSelectElement).value as FilterType,
-                    })
-                  }
-                  class="w-full text-sm border border-gray-200 rounded px-3 py-2 bg-white"
-                >
-                  <option value="all">All (Stories + Comments)</option>
-                  <option value="story">Stories Only</option>
-                  <option value="comment">Comments Only</option>
-                </select>
-              </div>
+          {/* Menu Items */}
+          <div class="space-y-2">
+            <button
+              onClick={() =>
+                chrome.tabs.create({
+                  url: "https://www.ygeeker.com/support/context/user-guide",
+                })
+              }
+              class="w-full flex items-center space-x-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              <FileText size={20} class="text-gray-600" />
+              <span class="text-sm font-medium text-apple-dark-gray">
+                User Guide
+              </span>
+            </button>
 
-              {/* URL Match Filter */}
-              <div>
-                <label class="block text-xs font-medium text-apple-dark-gray mb-1">
-                  URL Matching
-                </label>
-                <select
-                  value={filters.urlMatch}
-                  onChange={(e) =>
-                    handleFilterChange({
-                      ...filters,
-                      urlMatch: (e.target as HTMLSelectElement)
-                        .value as URLMatchType,
-                    })
-                  }
-                  class="w-full text-sm border border-gray-200 rounded px-3 py-2 bg-white"
-                >
-                  <option value="partial">Domain Match</option>
-                  <option value="full">Exact URL Match</option>
-                </select>
-              </div>
+            <button
+              onClick={() =>
+                chrome.tabs.create({
+                  url: "https://www.ygeeker.com/support/context/legal/privacy-policy",
+                })
+              }
+              class="w-full flex items-center space-x-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              <Shield size={20} class="text-gray-600" />
+              <span class="text-sm font-medium text-apple-dark-gray">
+                Privacy Policy
+              </span>
+            </button>
+          </div>
 
-              {/* Sort Filter */}
-              <div>
-                <label class="block text-xs font-medium text-apple-dark-gray mb-1">
-                  Sort By
-                </label>
-                <select
-                  value={filters.sort}
-                  onChange={(e) =>
-                    handleFilterChange({
-                      ...filters,
-                      sort: (e.target as HTMLSelectElement).value as SortType,
-                    })
-                  }
-                  class="w-full text-sm border border-gray-200 rounded px-3 py-2 bg-white"
-                >
-                  <option value="date">Most Recent</option>
-                  <option value="points">Most Popular</option>
-                </select>
+          {/* YGeeker Branding */}
+          <div class="pt-8 border-t border-gray-200">
+            <div class="flex flex-col items-center space-y-3">
+              <img src="./ygeeker.png" alt="YGeeker" class="w-12 h-12" />
+              <div class="text-center">
+                <h3 class="text-lg font-semibold text-apple-dark-gray">
+                  YGeeker
+                </h3>
+                <p class="text-xs text-gray-500 mt-1">
+                  Building tools for developers
+                </p>
               </div>
             </div>
           </div>

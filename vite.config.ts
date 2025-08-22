@@ -17,6 +17,7 @@ export default defineConfig({
         copyFileSync("assets/icon-16.png", "dist/icon-16.png");
         copyFileSync("assets/icon-48.png", "dist/icon-48.png");
         copyFileSync("assets/icon-128.png", "dist/icon-128.png");
+        copyFileSync("assets/ygeeker.png", "dist/ygeeker.png");
       },
     },
   ],
