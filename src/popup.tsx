@@ -11,6 +11,32 @@ import {
   SortType,
 } from "./services/hnApi";
 
+const STORAGE_KEY = 'context_filters';
+
+const loadFilters = async (): Promise<SearchFilters> => {
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEY);
+    if (result[STORAGE_KEY]) {
+      return result[STORAGE_KEY];
+    }
+  } catch (err) {
+    console.error('Failed to load filters from storage:', err);
+  }
+  return {
+    type: "all",
+    urlMatch: "full",
+    sort: "date",
+  };
+};
+
+const saveFilters = async (filters: SearchFilters): Promise<void> => {
+  try {
+    await chrome.storage.local.set({ [STORAGE_KEY]: filters });
+  } catch (err) {
+    console.error('Failed to save filters to storage:', err);
+  }
+};
+
 function App() {
   const [stories, setStories] = useState<HNStory[]>([]);
   const [comments, setComments] = useState<HNComment[]>([]);
@@ -28,16 +54,26 @@ function App() {
   const [hasMoreContent, setHasMoreContent] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
     type: "all",
-    urlMatch: "partial",
+    urlMatch: "full",
     sort: "date",
   });
+  const [filtersLoaded, setFiltersLoaded] = useState(false);
   const [currentPage, setCurrentPage] = useState<"main" | "settings">("main");
 
   const hnService = new HNSearchService();
 
   useEffect(() => {
-    getCurrentTabUrl();
+    loadFilters().then(savedFilters => {
+      setFilters(savedFilters);
+      setFiltersLoaded(true);
+    });
   }, []);
+
+  useEffect(() => {
+    if (filtersLoaded) {
+      getCurrentTabUrl();
+    }
+  }, [filtersLoaded]);
 
   const getCurrentTabUrl = async () => {
     try {
@@ -84,8 +120,10 @@ function App() {
       setHasMoreContent(
         foundComments.length >= 10 ||
           foundStories.some(
-            (story) =>
-              foundStoryComments.get(story.objectID || story.id)?.length >= 20
+            (story) => {
+              const storyId = story.objectID || story.id;
+              return storyId && (foundStoryComments.get(storyId)?.length ?? 0) >= 20;
+            }
           ) ||
           (foundStories.length > 0 && searchFilters.type === "story") // Always show load more for stories
       );
@@ -98,6 +136,7 @@ function App() {
 
   const handleFilterChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
+    saveFilters(newFilters);
     if (currentUrl) {
       searchComments(currentUrl, newFilters);
     }
@@ -138,7 +177,7 @@ function App() {
   const openStory = (story: HNStory) => {
     const storyId = story.objectID || story.id;
     chrome.tabs.create({
-      url: story.url || `https://news.ycombinator.com/item?id=${storyId}`,
+      url: `https://news.ycombinator.com/item?id=${storyId}`,
     });
   };
 
@@ -169,6 +208,8 @@ function App() {
 
         for (const story of stories) {
           const storyId = story.objectID || story.id;
+          if (!storyId) continue;
+          
           const currentComments = newStoryComments.get(storyId) || [];
           const currentPage = newStoryPages.get(storyId) || 1;
 
@@ -428,6 +469,8 @@ function App() {
             {/* Stories with their comments */}
             {stories.map((story) => {
               const storyId = story.objectID || story.id;
+              if (!storyId) return null;
+              
               const storyCommentsForThisStory =
                 storyComments.get(storyId) || [];
               return (
@@ -442,7 +485,7 @@ function App() {
                   >
                     <div class="flex items-start justify-between mb-1">
                       <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0 mt-1.5"></div>
+                        <div class="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></div>
                         <span class="text-xs font-medium text-apple-blue">
                           {story.author}
                         </span>
@@ -483,7 +526,7 @@ function App() {
                       >
                         <div class="flex items-start justify-between mb-1">
                           <div class="flex items-center space-x-2">
-                            <div class="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0 mt-1.5"></div>
+                            <div class="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0"></div>
                             <span class="text-xs font-medium text-apple-blue">
                               {comment.author}
                             </span>
@@ -528,7 +571,7 @@ function App() {
               >
                 <div class="flex items-start justify-between mb-1">
                   <div class="flex items-center space-x-2">
-                    <div class="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 mt-1.5"></div>
+                    <div class="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
                     <span class="text-xs font-medium text-apple-blue">
                       {comment.author}
                     </span>

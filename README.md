@@ -1,12 +1,12 @@
 <div align="center">
 
 <a href="https://www.ygeeker.com">
-  <img width="180" src="./assets/icon-48.png">
+  <img width="48" src="./assets/icon-48.png">
 </a>
 
 <h1 align="center">Context</h1>
 
-[![Release](https://img.shields.io/github/release/rivertwilight/timeline.svg)](https://github.com/rivertwilight/timeline/releases)
+[![Release](https://img.shields.io/github/release/rivertwilight/context.svg)](https://github.com/rivertwilight/context/releases)
 
 </div>
 
@@ -16,7 +16,7 @@ https://github.com/RiverTwilight/Timeline/assets/52880665/57179574-3c24-48ea-b21
 
 ## Get Context
 
-- [Chrome Web Store](https://chrome.google.com/webstore/detail/timeline-x-history/fdmmhjkfeembndibfcpiaohjhlnafnpd?hl=en-US)
+- [Chrome Web Store](https://chromewebstore.google.com/detail/gijnkobajpcpgllfjkpbfljoomkdnjhm?utm_source=item-share-cb)
 - Firefox Add-ons (Working)
 - Edge Add-ons (Working)
 
